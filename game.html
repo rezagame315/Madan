@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>بازی معدن‌داری و فروشگاه</title>
+  <style>
+    :root {
+      --bg-dark: #12141a;
+      --card-bg: #1c202a;
+      --border: #2d3545;
+      --text: #e6edf3;
+      --copper: #ce7437;
+      --silver: #dce5ec;
+      --gold: #ffd700;
+      --diamond: #70f5ff;
+      --money: #4ade80;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      font-family: Tahoma, Segoe UI, sans-serif;
+    }
+
+    body {
+      background: var(--bg-dark);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+      direction: rtl;
+    }
+
+    #app {
+      width: 100%;
+      max-width: 720px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: #161922;
+      border-left: 2px solid var(--border);
+      border-right: 2px solid var(--border);
+      position: relative;
+    }
+
+    /* نوار وضعیت بالای صفحه */
+    .top-bar {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      background: #0f1218;
+      padding: 10px 8px;
+      border-bottom: 2px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .stat-badge {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 2px;
+      text-align: center;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .stat-badge .label {
+      font-size: 11px;
+      opacity: 0.8;
+    }
+
+    .stat-badge .val {
+      font-weight: bold;
+      font-size: 13px;
+    }
+
+    .val-copper { color: var(--copper); }
+    .val-silver { color: var(--silver); }
+    .val-gold { color: var(--gold); }
+    .val-diamond { color: var(--diamond); }
+    .val-money { color: var(--money); }
+
+    /* تب‌های ناوبری اصلی */
+    .nav-tabs {
+      display: flex;
+      background: #11141c;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 12px;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      border-bottom-color: #3b82f6;
+      background: #1b212f;
+      color: #60a5fa;
+    }
+
+    /* صفحات اصلی */
+    .screen {
+      display: none;
+      flex: 1;
+      padding: 16px;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    /* کارت‌های فهرست معدن */
+    .mine-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .mine-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .mine-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .mine-icon {
+      font-size: 32px;
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #12151d;
+      border: 1px solid var(--border);
+    }
+
+    .mine-name {
+      font-weight: bold;
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+    .mine-sub {
+      font-size: 12px;
+      opacity: 0.7;
+    }
+
+    .btn {
+      padding: 9px 18px;
+      border-radius: 8px;
+      border: none;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.2s;
+    }
+
+    .btn:active {
+      transform: scale(0.96);
+    }
+
+    .btn-enter {
+      background: #2563eb;
+      color: #fff;
+    }
+
+    .btn-buy {
+      background: #16a34a;
+      color: #fff;
+    }
+
+    .btn-back {
+      background: #374151;
+      color: #fff;
+      padding: 7px 14px;
+      border-radius: 6px;
+      display: inline-block;
+      margin-bottom: 10px;
+      cursor: pointer;
+      border: none;
+      font-size: 13px;
+      width: fit-content;
+    }
+
+    /* محیط داخل غار معدن */
+    .cave-view {
+      position: relative;
+      height: 380px;
+      background: radial-gradient(circle at 50% 20%, #2f251d, #0d0a08 85%);
+      border: 2px solid #3d3128;
+      border-radius: 14px;
+      overflow: hidden;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+    }
+
+    .cave-view.shake {
+      animation: caveShake 0.14s linear;
+    }
+
+    @keyframes caveShake {
+      0% { transform: translate(0, 0); }
+      25% { transform: translate(-3px, 2px); }
+      50% { transform: translate(3px, -2px); }
+      75% { transform: translate(-2px, -1px); }
+      100% { transform: translate(0, 0); }
+    }
+
+    .torch {
+      position: absolute;
+      top: 30px;
+      font-size: 26px;
+      filter: drop-shadow(0 0 14px #ff7b00);
+      pointer-events: none;
+    }
+    .torch.left { left: 24px; }
+    .torch.right { right: 24px; }
+
+    .mine-hint {
+      position: absolute;
+      top: 14px;
+      background: rgba(0, 0, 0, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      color: #f3f4f6;
+      pointer-events: none;
+    }
+
+    /* کاراکتر معدنچی */
+    .miner-character {
+      position: absolute;
+      left: calc(30% + var(--miner-step, 0px));
+      bottom: 22px;
+      width: 72px;
+      height: 120px;
+      pointer-events: none;
+      transition: left 0.15s ease-out;
+    }
+
+    .miner-body {
+      position: absolute;
+      bottom: 0;
+      left: 18px;
+      width: 36px;
+      height: 60px;
+      background: #2563eb;
+      border-radius: 10px;
+      border: 2px solid #1e3a8a;
+    }
+
+    .miner-head {
+      position: absolute;
+      top: 18px;
+      left: 16px;
+      width: 40px;
+      height: 40px;
+      background: #fcd34d;
+      border-radius: 50%;
+      border: 2px solid #b45309;
+    }
+
+    .miner-helmet {
+      position: absolute;
+      top: -8px;
+      left: -2px;
+      width: 44px;
+      height: 20px;
+      background: #f59e0b;
+      border-radius: 20px 20px 0 0;
+    }
+
+    .miner-helmet-light {
+      position: absolute;
+      right: 0;
+      top: 4px;
+      width: 9px;
+      height: 9px;
+      background: #ffffff;
+      box-shadow: 0 0 10px 4px #fff677;
+      border-radius: 50%;
+    }
+
+    .miner-pickaxe {
+      position: absolute;
+      top: 24px;
+      right: -16px;
+      font-size: 34px;
+      transform-origin: bottom left;
+      transform: rotate(0deg);
+      transition: transform 0.08s;
+    }
+
+    .miner-character.mining-anim .miner-pickaxe {
+      transform: rotate(58deg);
+    }
+
+    .miner-character.walk-forward {
+      animation: minerWalk 0.22s ease;
+    }
+
+    @keyframes minerWalk {
+      0% { transform: translateY(0) rotate(0deg); }
+      35% { transform: translateY(-5px) rotate(-2deg); }
+      70% { transform: translateY(0) rotate(2deg); }
+      100% { transform: translateY(0) rotate(0deg); }
+    }
+
+    /* سنگ معدن جلوی کارگر */
+    .ore-zone {
+      position: absolute;
+      right: 8%;
+      bottom: 24px;
+      width: 210px;
+      height: 210px;
+      pointer-events: none;
+    }
+
+    .ore-rock {
+      position: absolute;
+      right: 12px;
+      bottom: 0;
+      width: 155px;
+      height: 155px;
+      background:
+        radial-gradient(circle at 25% 25%, var(--ore-glow) 0 5px, transparent 6px),
+        radial-gradient(circle at 62% 20%, var(--ore-color) 0 7px, transparent 8px),
+        radial-gradient(circle at 76% 47%, var(--ore-glow) 0 5px, transparent 6px),
+        radial-gradient(circle at 30% 65%, var(--ore-color) 0 8px, transparent 9px),
+        radial-gradient(circle at 60% 78%, var(--ore-glow) 0 6px, transparent 7px),
+        linear-gradient(145deg, #5c5149, #251e1a 72%);
+      border: 4px solid #18120f;
+      border-radius: 48% 38% 45% 35%;
+      transform: rotate(-6deg);
+      box-shadow:
+        inset -18px -15px 25px rgba(0,0,0,0.55),
+        inset 10px 10px 18px rgba(255,255,255,0.07),
+        0 12px 18px rgba(0,0,0,0.6);
+      transition: transform 0.12s ease;
+    }
+
+    .ore-piece {
+      position: absolute;
+      background: var(--ore-color);
+      border: 3px solid var(--ore-dark);
+      box-shadow: 0 0 13px var(--ore-glow), inset 3px 3px 5px rgba(255,255,255,0.35);
+      transform: rotate(25deg);
+    }
+
+    .ore-piece.one {
+      width: 31px;
+      height: 25px;
+      right: 3px;
+      bottom: 7px;
+      border-radius: 45% 55% 35% 65%;
+    }
+
+    .ore-piece.two {
+      width: 25px;
+      height: 22px;
+      right: 63px;
+      bottom: 8px;
+      border-radius: 60% 40% 50% 35%;
+      transform: rotate(-18deg);
+    }
+
+    .ore-piece.three {
+      width: 19px;
+      height: 18px;
+      right: 112px;
+      bottom: 13px;
+      border-radius: 40% 60% 35% 55%;
+    }
+
+    .ore-label {
+      position: absolute;
+      top: 0;
+      right: 28px;
+      min-width: 120px;
+      padding: 7px 12px;
+      color: #fff;
+      background: rgba(0,0,0,0.75);
+      border: 2px solid var(--ore-color);
+      border-radius: 20px;
+      text-align: center;
+      font-weight: bold;
+      box-shadow: 0 0 12px var(--ore-glow);
+    }
+
+    /* رنگ‌های هر معدن */
+    .ore-zone.copper {
+      --ore-color: #ce7437;
+      --ore-dark: #713413;
+      --ore-glow: rgba(255, 126, 40, 0.85);
+    }
+
+    .ore-zone.silver {
+      --ore-color: #dce5ec;
+      --ore-dark: #697780;
+      --ore-glow: rgba(220, 240, 255, 0.9);
+    }
+
+    .ore-zone.gold {
+      --ore-color: #ffd700;
+      --ore-dark: #9a7000;
+      --ore-glow: rgba(255, 215, 0, 0.9);
+    }
+
+    .ore-zone.diamond {
+      --ore-color: #70f5ff;
+      --ore-dark: #197d95;
+      --ore-glow: rgba(80, 235, 255, 0.95);
+    }
+
+    .ore-zone.hit .ore-rock {
+      animation: oreHit 0.18s ease;
+    }
+
+    @keyframes oreHit {
+      0% { transform: rotate(-6deg) scale(1); }
+      40% { transform: rotate(-2deg) scale(0.94); }
+      100% { transform: rotate(-6deg) scale(1); }
+    }
+
+    .ore-particle {
+      position: absolute;
+      z-index: 25;
+      width: 12px;
+      height: 12px;
+      border-radius: 4px;
+      background: var(--particle-color);
+      border: 2px solid rgba(0,0,0,0.4);
+      box-shadow: 0 0 10px var(--particle-color);
+      pointer-events: none;
+      animation: oreParticleFly 0.75s ease-out forwards;
+    }
+
+    @keyframes oreParticleFly {
+      0% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
+      50% { opacity: 1; transform: translate(var(--particle-x), -65px) rotate(180deg) scale(1.1); }
+      100% { opacity: 0; transform: translate(calc(var(--particle-x) * 1.3), 30px) rotate(360deg) scale(0.5); }
+    }
+
+    /* متن شناور +۱۰ منبع */
+    .floating-gain {
+      position: absolute;
+      font-weight: bold;
+      font-size: 20px;
+      pointer-events: none;
+      z-index: 40;
+      animation: floatUp 0.8s ease-out forwards;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+    }
+
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-60px) scale(1.2); }
+    }
+
+    /* محیط فروشگاه و کامپیوترها */
+    .shop-desk {
+      background: #2a1f18;
+      border: 3px solid #4a372c;
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .shop-title {
+      text-align: center;
+      font-size: 16px;
+      font-weight: bold;
+      color: #fcd34d;
+      margin-bottom: 4px;
+    }
+
+    .computers-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .computer-box {
+      background: #181d26;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 180px;
+      position: relative;
+      text-align: center;
+    }
+
+    .pc-monitor {
+      width: 100%;
+      background: #0b0e14;
+      border: 2px solid #374151;
+      border-radius: 6px;
+      padding: 8px 4px;
+      min-height: 80px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .pc-order-title {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-bottom: 4px;
+    }
+
+    .pc-order-detail {
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .pc-order-reward {
+      font-size: 11px;
+      color: var(--money);
+      margin-top: 2px;
+    }
+
+    .btn-sell {
+      background: #0284c7;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      margin-top: auto;
+      width: 100%;
+      font-weight: bold;
+    }
+
+    .btn-sell:disabled {
+      background: #374151;
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* پول نقدی که روی کامپیوتر برای جمع‌آوری قرار می‌گیرد */
+    .cash-ready {
+      background: #065f46;
+      border: 2px dashed #34d399;
+      border-radius: 8px;
+      padding: 10px 4px;
+      width: 100%;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      animation: pulseCash 1s infinite alternate;
+    }
+
+    @keyframes pulseCash {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.04); }
+    }
+
+    .cash-amount {
+      font-weight: bold;
+      color: #ecfdf5;
+      font-size: 13px;
+    }
+
+    .order-timer-bar {
+      width: 100%;
+      height: 4px;
+      background: #374151;
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+
+    .order-timer-fill {
+      height: 100%;
+      background: #3b82f6;
+      width: 100%;
+      transition: width 1s linear;
+    }
+
+    /* بنر ساده پیام خطا/موفقیت */
+    .toast-msg {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid var(--border);
+      padding: 10px 18px;
+      border-radius: 20px;
+      font-size: 13px;
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .toast-msg.show {
+      opacity: 1;
+    }
+
+    /* مدال شبیه‌ساز تبلیغات ۵ دقیقه‌ای */
+    .ad-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 500;
+      padding: 20px;
+    }
+
+    .ad-box {
+      background: #1f2937;
+      border: 2px solid #4b5563;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 360px;
+      width: 100%;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <!-- نوار بالای صفحه برای منابع و پول -->
+  <header class="top-bar">
+    <div class="stat-badge">
+      <span class="label">مس</span>
+      <span class="val val-copper" id="ui-copper">0</span>
+    </div>
+    <div class="stat-badge">
+      <span class="label">نقره</span>
+      <span class="val val-silver" id="ui-silver">0</span>
+    </div>
+    <div class="stat-badge">
+      <span class="label">طلا</span>
+      <span class="val val-gold" id="ui-gold">0</span>
+    </div>
+    <div class="stat-badge">
+      <span class="label">الماس</span>
+      <span class="val val-diamond" id="ui-diamond">0</span>
+    </div>
+    <div class="stat-badge">
+      <span class="label">پول</span>
+      <span class="val val-money" id="ui-money">0</span>
+    </div>
+  </header>
+
+  <!-- تب‌های ناوبری -->
+  <nav class="nav-tabs" id="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('screen-mines')">⛏️ معدن‌های من</button>
+    <button class="tab-btn" onclick="switchTab('screen-shop')">🏪 فروشگاه من</button>
+  </nav>
+
+  <!-- صفحه فهرست معدن‌ها -->
+  <main class="screen active" id="screen-mines">
+    <div class="mine-grid">
+      <!-- معدن مس (پیش‌فرض باز) -->
+      <div class="mine-card">
+        <div class="mine-info">
+          <div class="mine-icon">🟤</div>
+          <div>
+            <div class="mine-name">معدن مس</div>
+            <div class="mine-sub">استخراج ۱۰ مس در هر ضربه</div>
+          </div>
+        </div>
+        <button class="btn btn-enter" onclick="enterCave('copper')">ورود به معدن</button>
+      </div>
+
+      <!-- معدن نقره -->
+      <div class="mine-card" id="card-silver">
+        <div class="mine-info">
+          <div class="mine-icon">⚪</div>
+          <div>
+            <div class="mine-name">معدن نقره</div>
+            <div class="mine-sub">قیمت بازگشایی: ۵,۰۰۰ پول</div>
+          </div>
+        </div>
+        <button class="btn btn-buy" id="btn-silver" onclick="unlockMine('silver', 5000)">باز کردن (۵۰۰۰)</button>
+      </div>
+
+      <!-- معدن طلا -->
+      <div class="mine-card" id="card-gold">
+        <div class="mine-info">
+          <div class="mine-icon">🟡</div>
+          <div>
+            <div class="mine-name">معدن طلا</div>
+            <div class="mine-sub">قیمت بازگشایی: ۷,۰۰۰ پول</div>
+          </div>
+        </div>
+        <button class="btn btn-buy" id="btn-gold" onclick="unlockMine('gold', 7000)">باز کردن (۷۰۰۰)</button>
+      </div>
+
+      <!-- معدن الماس -->
+      <div class="mine-card" id="card-diamond">
+        <div class="mine-info">
+          <div class="mine-icon">💎</div>
+          <div>
+            <div class="mine-name">معدن الماس</div>
+            <div class="mine-sub">قیمت بازگشایی: ۳۰,۰۰۰ پول</div>
+          </div>
+        </div>
+        <button class="btn btn-buy" id="btn-diamond" onclick="unlockMine('diamond', 30000)">باز کردن (۳۰۰۰۰)</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- صفحه اختصاصی داخل غار معدن -->
+  <section class="screen" id="screen-cave">
+    <button class="btn-back" onclick="leaveCave()">⬅ بازگشت به لیست معدن‌ها</button>
+    <div style="font-weight: bold; margin-bottom: 6px;" id="cave-title">تونل معدن</div>
+
+    <div class="cave-view" id="cave-view" onclick="mineClick(event)">
+      <div class="torch left">🔥</div>
+      <div class="torch right">🔥</div>
+
+      <div class="mine-hint">برای کلنگ زدن روی غار کلیک کنید (+۱۰ واحد)</div>
+
+      <!-- توده منبع مخصوص معدن فعال -->
+      <div class="ore-zone copper" id="ore-zone">
+        <div class="ore-label" id="ore-label">سنگ مس</div>
+        <div class="ore-rock"></div>
+        <div class="ore-piece one"></div>
+        <div class="ore-piece two"></div>
+        <div class="ore-piece three"></div>
+      </div>
+
+      <!-- کاراکتر کارگر با کلنگ -->
+      <div class="miner-character" id="miner-char">
+        <div class="miner-body"></div>
+        <div class="miner-head">
+          <div class="miner-helmet">
+            <div class="miner-helmet-light"></div>
+          </div>
+        </div>
+        <div class="miner-pickaxe">⛏️</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- صفحه فروشگاه با ۳ کامپیوتر سفارش -->
+  <section class="screen" id="screen-shop">
+    <div class="shop-desk">
+      <div class="shop-title">🖥️ پیشخوان دریافت سفارش‌های مشتریان (۳ سیستم)</div>
+
+      <div class="computers-row">
+        <!-- کامپیوتر ۱ -->
+        <div class="computer-box" id="pc-box-0">
+          <div class="pc-monitor" id="pc-monitor-0">
+            <div class="pc-order-title">سیستم ۱</div>
+            <div class="pc-order-detail" id="pc-detail-0">در حال جستجو...</div>
+            <div class="pc-order-reward" id="pc-reward-0"></div>
+          </div>
+          <div class="order-timer-bar"><div class="order-timer-fill" id="pc-timer-0"></div></div>
+          <button class="btn-sell" id="pc-btn-0" onclick="handleComputerAction(0)">ارسال بار</button>
+        </div>
+
+        <!-- کامپیوتر ۲ -->
+        <div class="computer-box" id="pc-box-1">
+          <div class="pc-monitor" id="pc-monitor-1">
+            <div class="pc-order-title">سیستم ۲</div>
+            <div class="pc-order-detail" id="pc-detail-1">در حال جستجو...</div>
+            <div class="pc-order-reward" id="pc-reward-1"></div>
+          </div>
+          <div class="order-timer-bar"><div class="order-timer-fill" id="pc-timer-1"></div></div>
+          <button class="btn-sell" id="pc-btn-1" onclick="handleComputerAction(1)">ارسال بار</button>
+        </div>
+
+        <!-- کامپیوتر ۳ -->
+        <div class="computer-box" id="pc-box-2">
+          <div class="pc-monitor" id="pc-monitor-2">
+            <div class="pc-order-title">سیستم ۳</div>
+            <div class="pc-order-detail" id="pc-detail-2">در حال جستجو...</div>
+            <div class="pc-order-reward" id="pc-reward-2"></div>
+          </div>
+          <div class="order-timer-bar"><div class="order-timer-fill" id="pc-timer-2"></div></div>
+          <button class="btn-sell" id="pc-btn-2" onclick="handleComputerAction(2)">ارسال بار</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- پیام‌های هشدار موقت -->
+<div class="toast-msg" id="toast-msg">پیام سیستم</div>
+
+<!-- مودال تبلیغات آنلاین هر ۵ دقیقه -->
+<div class="ad-modal" id="ad-modal">
+  <div class="ad-box">
+    <h3>📺 تبلیغ حامی بازی</h3>
+    <p>تبلیغ دوره‌ای ۵ دقیقه برای حمایت از بازی.</p>
+    <div style="font-size: 20px; font-weight: bold; color: #f59e0b;" id="ad-timer">5</div>
+    <button class="btn btn-buy" id="btn-close-ad" style="display: none;" onclick="closeAdModal()">بستن تبلیغ</button>
+  </div>
+</div>
+
+<script>
+  /* ===================================================
+     نرخ جدید قیمت‌های فروش: هر ۱۰ واحد منبع
+  =================================================== */
+  const UNIT_PRICES = {
+    copper: 20,   // هر ۱۰ مس = ۲۰ پول
+    silver: 30,   // هر ۱۰ نقره = ۳۰ پول
+    gold: 40,     // هر ۱۰ طلا = ۴۰ پول
+    diamond: 50   // هر ۱۰ الماس = ۵۰ پول
+  };
+
+  const MINE_NAMES = {
+    copper: 'مس',
+    silver: 'نقره',
+    gold: 'طلا',
+    diamond: 'الماس'
+  };
+
+  const ORE_COLORS = {
+    copper: '#ce7437',
+    silver: '#dce5ec',
+    gold: '#ffd700',
+    diamond: '#70f5ff'
+  };
+
+  let currentCave = 'copper';
+  let mineHitCount = 0;
+
+  // وضعیت اصلی بازی
+  let gameState = {
+    money: 0,
+    inventory: {
+      copper: 0,
+      silver: 0,
+      gold: 0,
+      diamond: 0
+    },
+    unlockedMines: {
+      copper: true,
+      silver: false,
+      gold: false,
+      diamond: false
+    }
+  };
+
+  // داده‌های سه سیستم کامپیوتر در فروشگاه
+  let computers = [
+    { state: 'empty', order: null, timeLeft: 0, maxTime: 0, readyCash: 0 },
+    { state: 'empty', order: null, timeLeft: 0, maxTime: 0, readyCash: 0 },
+    { state: 'empty', order: null, timeLeft: 0, maxTime: 0, readyCash: 0 }
+  ];
+
+  /* ---------------- صدا با Web Audio API ---------------- */
+  let audioCtx = null;
+  function playBeep(freq = 440, duration = 0.08) {
+    try {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    } catch(e) {}
+  }
+
+  /* ---------------- ذخیره‌سازی بازی ---------------- */
+  function loadGame() {
+    try {
+      const saved = localStorage.getItem('mine_shop_game_save');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.inventory) {
+          gameState = parsed;
+        }
+      }
+    } catch(e) {}
+    updateUI();
+  }
+
+  function saveGame() {
+    try {
+      localStorage.setItem('mine_shop_game_save', JSON.stringify(gameState));
+    } catch(e) {}
+  }
+
+  /* ---------------- بروزرسانی المان‌های صفحه ---------------- */
+  function updateUI() {
+    document.getElementById('ui-copper').innerText = gameState.inventory.copper;
+    document.getElementById('ui-silver').innerText = gameState.inventory.silver;
+    document.getElementById('ui-gold').innerText = gameState.inventory.gold;
+    document.getElementById('ui-diamond').innerText = gameState.inventory.diamond;
+    document.getElementById('ui-money').innerText = gameState.money.toLocaleString('fa-IR');
+
+    // دکمه‌های بازگشایی معدن‌ها
+    ['silver', 'gold', 'diamond'].forEach(type => {
+      const btn = document.getElementById(`btn-${type}`);
+      if (gameState.unlockedMines[type]) {
+        btn.innerText = 'ورود به معدن';
+        btn.className = 'btn btn-enter';
+        btn.onclick = () => enterCave(type);
+      }
+    });
+
+    saveGame();
+  }
+
+  function showToast(msg) {
+    const el = document.getElementById('toast-msg');
+    el.innerText = msg;
+    el.classList.add('show');
+    setTimeout(() => {
+      el.classList.remove('show');
+    }, 2200);
+  }
+
+  /* ---------------- تب‌ها و جابه‌جایی ---------------- */
+  function switchTab(tabId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+
+    const navTabs = document.getElementById('nav-tabs');
+    navTabs.style.display = 'flex';
+
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    if (tabId === 'screen-mines') {
+      document.querySelectorAll('.tab-btn')[0].classList.add('active');
+    } else if (tabId === 'screen-shop') {
+      document.querySelectorAll('.tab-btn')[1].classList.add('active');
+    }
+  }
+
+  function showScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+  }
+
+  /* ---------------- باز کردن معدن ---------------- */
+  function unlockMine(type, price) {
+    if (gameState.money >= price) {
+      gameState.money -= price;
+      gameState.unlockedMines[type] = true;
+      playBeep(520, 0.2);
+      showToast(`معدن ${MINE_NAMES[type]} با موفقیت باز شد!`);
+      updateUI();
+    } else {
+      playBeep(180, 0.2);
+      showToast('پول کافی برای باز کردن این معدن ندارید!');
+    }
+  }
+
+  /* ---------------- ورود و خروج غار ---------------- */
+  function enterCave(type) {
+    currentCave = type;
+    mineHitCount = 0;
+
+    document.getElementById('cave-title').innerText = `تونل معدن ${MINE_NAMES[type]}`;
+    document.getElementById('nav-tabs').style.display = 'none';
+
+    const oreZone = document.getElementById('ore-zone');
+    const oreLabel = document.getElementById('ore-label');
+    oreZone.className = `ore-zone ${type}`;
+    oreLabel.innerText = `سنگ ${MINE_NAMES[type]}`;
+
+    const miner = document.getElementById('miner-char');
+    miner.style.setProperty('--miner-step', '0px');
+
+    showScreen('screen-cave');
+  }
+
+  function leaveCave() {
+    switchTab('screen-mines');
+  }
+
+  /* ---------------- پرتاب ذرات هم‌رنگ منبع ---------------- */
+  function createOreParticles() {
+    const cave = document.getElementById('cave-view');
+    const oreZone = document.getElementById('ore-zone');
+
+    const caveRect = cave.getBoundingClientRect();
+    const oreRect = oreZone.getBoundingClientRect();
+
+    const startX = oreRect.left - caveRect.left + oreRect.width * 0.45;
+    const startY = oreRect.top - caveRect.top + oreRect.height * 0.55;
+
+    for (let i = 0; i < 7; i++) {
+      const p = document.createElement('div');
+      p.className = 'ore-particle';
+      p.style.left = `${startX + Math.random() * 45}px`;
+      p.style.top = `${startY + Math.random() * 40}px`;
+      p.style.setProperty('--particle-x', `${Math.floor(Math.random() * 100) - 50}px`);
+      p.style.setProperty('--particle-color', ORE_COLORS[currentCave]);
+      p.style.animationDelay = `${Math.random() * 0.08}s`;
+
+      cave.appendChild(p);
+      setTimeout(() => { p.remove(); }, 850);
+    }
+  }
+
+  /* ---------------- کلیک داخل غار (استخراج) ---------------- */
+  function mineClick(event) {
+    // افزایش ۱۰ واحد از منبع همین غار
+    gameState.inventory[currentCave] += 10;
+    mineHitCount += 1;
+
+    updateUI();
+    playBeep(260, 0.1);
+
+    const miner = document.getElementById('miner-char');
+    const cave = document.getElementById('cave-view');
+    const oreZone = document.getElementById('ore-zone');
+
+    // انیمیشن کلنگ
+    miner.classList.remove('mining-anim');
+    miner.classList.remove('walk-forward');
+    void miner.offsetWidth;
+    miner.classList.add('mining-anim');
+    miner.classList.add('walk-forward');
+
+    setTimeout(() => {
+      miner.classList.remove('mining-anim');
+      miner.classList.remove('walk-forward');
+    }, 220);
+
+    // حرکت رو به جلو کارگر به سوی سنگ
+    const forwardDistance = Math.min(mineHitCount * 2, 70);
+    miner.style.setProperty('--miner-step', `${forwardDistance}px`);
+
+    // لرزش غار
+    cave.classList.remove('shake');
+    void cave.offsetWidth;
+    cave.classList.add('shake');
+
+    // لرزش و ضربه سنگ
+    oreZone.classList.remove('hit');
+    void oreZone.offsetWidth;
+    oreZone.classList.add('hit');
+    setTimeout(() => { oreZone.classList.remove('hit'); }, 180);
+
+    createOreParticles();
+
+    // عدد شناور +۱۰
+    const rect = cave.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    const gainEl = document.createElement('div');
+    gainEl.className = 'floating-gain';
+    gainEl.innerText = `+۱۰ ${MINE_NAMES[currentCave]}`;
+    gainEl.style.left = `${x}px`;
+    gainEl.style.top = `${y}px`;
+    gainEl.style.color = ORE_COLORS[currentCave];
+
+    cave.appendChild(gainEl);
+    setTimeout(() => { gainEl.remove(); }, 800);
+  }
+
+  /* ===================================================
+     منطق ۳ کامپیوتر فروشگاه
+  =================================================== */
+  function getUnlockedList() {
+    const list = [];
+    for (const key in gameState.unlockedMines) {
+      if (gameState.unlockedMines[key]) {
+        list.push(key);
+      }
+    }
+    return list;
+  }
+
+  function spawnRandomOrder(index) {
+    const available = getUnlockedList();
+    if (available.length === 0) return;
+
+    const oreType = available[Math.floor(Math.random() * available.length)];
+    // سفارش مضربی از ۱۰: بین ۱۰ تا ۴۰ واحد
+    const amount = (Math.floor(Math.random() * 4) + 1) * 10;
+    const pay = (amount / 10) * UNIT_PRICES[oreType];
+    const duration = 28 + Math.floor(Math.random() * 16);
+
+    computers[index] = {
+      state: 'order',
+      order: { oreType, amount, pay },
+      timeLeft: duration,
+      maxTime: duration,
+      readyCash: 0
+    };
+
+    renderComputer(index);
+  }
+
+  function renderComputer(index) {
+    const pc = computers[index];
+    const monitor = document.getElementById(`pc-monitor-${index}`);
+    const detail = document.getElementById(`pc-detail-${index}`);
+    const reward = document.getElementById(`pc-reward-${index}`);
+    const btn = document.getElementById(`pc-btn-${index}`);
+    const timerFill = document.getElementById(`pc-timer-${index}`);
+
+    if (pc.state === 'empty') {
+      detail.innerText = 'در انتظار سفارش...';
+      reward.innerText = '';
+      btn.style.display = 'none';
+      timerFill.style.width = '0%';
+    } else if (pc.state === 'order') {
+      btn.style.display = 'block';
+      btn.className = 'btn-sell';
+      btn.innerText = 'ارسال سفارش';
+      btn.disabled = false;
+
+      detail.innerText = `${pc.order.amount} عدد ${MINE_NAMES[pc.order.oreType]}`;
+      detail.style.color = ORE_COLORS[pc.order.oreType];
+      reward.innerText = `دریافتی: ${pc.order.pay} پول`;
+
+      const pct = (pc.timeLeft / pc.maxTime) * 100;
+      timerFill.style.width = `${pct}%`;
+    } else if (pc.state === 'paid') {
+      btn.style.display = 'none';
+      timerFill.style.width = '0%';
+
+      detail.innerHTML = `
+        <div class="cash-ready" onclick="collectCash(${index})">
+          <span>💵 پرداخت نقدی آماده:</span>
+          <span class="cash-amount">+${pc.readyCash} پول</span>
+          <span style="font-size:10px; color:#a7f3d0;">برای برداشت کلیک کنید</span>
+        </div>
+      `;
+      reward.innerText = '';
+    }
+  }
+
+  function handleComputerAction(index) {
+    const pc = computers[index];
+    if (pc.state !== 'order' || !pc.order) return;
+
+    const { oreType, amount, pay } = pc.order;
+
+    if (gameState.inventory[oreType] >= amount) {
+      // کسر منبع و آماده‌سازی پول روی مانیتور
+      gameState.inventory[oreType] -= amount;
+      updateUI();
+      playBeep(480, 0.15);
+
+      pc.state = 'paid';
+      pc.readyCash = pay;
+      pc.order = null;
+      renderComputer(index);
+    } else {
+      // موجودی ناکافی: خطا و حذف سفارش
+      playBeep(160, 0.25);
+      showToast(`موجودی ${MINE_NAMES[oreType]} کافی نیست! سفارش لغو شد.`);
+      computers[index] = { state: 'empty', order: null, timeLeft: 0, maxTime: 0, readyCash: 0 };
+      renderComputer(index);
+
+      // ایجاد سفارش تازه بعد از چند ثانیه
+      setTimeout(() => { spawnRandomOrder(index); }, 3500);
+    }
+  }
+
+  function collectCash(index) {
+    const pc = computers[index];
+    if (pc.state === 'paid' && pc.readyCash > 0) {
+      gameState.money += pc.readyCash;
+      playBeep(640, 0.18);
+      showToast(`مبلغ +${pc.readyCash} پول به صندوق شما واریز شد.`);
+      pc.state = 'empty';
+      pc.readyCash = 0;
+      updateUI();
+      renderComputer(index);
+
+      setTimeout(() => { spawnRandomOrder(index); }, 2500);
+    }
+  }
+
+  // تایمر پیوسته برای کامپیوترها
+  setInterval(() => {
+    computers.forEach((pc, idx) => {
+      if (pc.state === 'order') {
+        pc.timeLeft -= 1;
+        if (pc.timeLeft <= 0) {
+          // منقضی شدن سفارش
+          computers[idx] = { state: 'empty', order: null, timeLeft: 0, maxTime: 0, readyCash: 0 };
+          renderComputer(idx);
+          setTimeout(() => { spawnRandomOrder(idx); }, 3000);
+        } else {
+          renderComputer(idx);
+        }
+      } else if (pc.state === 'empty') {
+        // ایجاد خودکار سفارش اگر سیستم خالی باشد
+        if (Math.random() < 0.35) {
+          spawnRandomOrder(idx);
+        }
+      }
+    });
+  }, 1000);
+
+  /* ===================================================
+     تبلیغ هر ۵ دقیقه (در صورت آنلاین بودن مرورگر)
+  =================================================== */
+  const AD_INTERVAL_MS = 5 * 60 * 1000;
+  setInterval(() => {
+    if (navigator.onLine) {
+      showAdModal();
+    }
+  }, AD_INTERVAL_MS);
+
+  let adCountdown = 5;
+  let adInterval = null;
+
+  function showAdModal() {
+    const modal = document.getElementById('ad-modal');
+    const timerEl = document.getElementById('ad-timer');
+    const closeBtn = document.getElementById('btn-close-ad');
+
+    adCountdown = 5;
+    timerEl.innerText = adCountdown;
+    closeBtn.style.display = 'none';
+    modal.style.display = 'flex';
+
+    if (adInterval) clearInterval(adInterval);
+    adInterval = setInterval(() => {
+      adCountdown -= 1;
+      if (adCountdown <= 0) {
+        clearInterval(adInterval);
+        timerEl.innerText = '✅ تبلیغ تکمیل شد';
+        closeBtn.style.display = 'inline-block';
+      } else {
+        timerEl.innerText = adCountdown;
+      }
+    }, 1000);
+  }
+
+  function closeAdModal() {
+    document.getElementById('ad-modal').style.display = 'none';
+  }
+
+  /* ---------------- شروع بازی ---------------- */
+  window.addEventListener('DOMContentLoaded', () => {
+    loadGame();
+
+    // راه‌اندازی اولیه ۳ سفارش برای کامپیوترها
+    setTimeout(() => {
+      spawnRandomOrder(0);
+      spawnRandomOrder(1);
+      spawnRandomOrder(2);
+    }, 800);
+  });
+</script>
+</body>
+</html>
